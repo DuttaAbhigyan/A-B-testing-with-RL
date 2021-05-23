@@ -25,9 +25,18 @@ import random
 # listings --> Dictionary containing all the listings
 # customers --> List containing the customer objects
 # dim --> dimension of the type profiles
-# alpha --> alphafrom the probability choice model i.e the Bernoulli probability associated with 
-#           forming the consideration set
-#interventionEffectUtility --> how intervention affects the utility of 
+# alpha --> alpha from the probability choice model i.e the Bernoulli probability associated with 
+#           forming the consideration set, a 2D matrix where rows denote listing group type and 
+#           columns denote customer group type
+# interventionEffectAlpha --> a 2D matrix which decides how to change the alpha when an intervention
+#                             is applied. Basically, it scales the alpha by a factor greater than or 
+#                             less than 1 (and positive). A 2D matrix where rows denote listing group type and 
+#                             columns denote customer group type
+#interventionEffectUtility --> a 2D matrix which decides how to change the utility when an intervention
+#                             is applied. Basically, it scales the utility by a factor greater than or 
+#                             less than 1 (and positive). A 2D matrix where rows denote listing group type and 
+#                             columns denote customer group type
+#epsilon --> probability associated with customer not buying anything
 
 def environment(object):
     
@@ -76,21 +85,23 @@ def environment(object):
     
     def updateState(self, index):
         self.state[index[0]][index[1]] -= 1
+        
     
     # Performs random sampling according to the choice model of the customer and returns the choice
-    def getChoice(self, customerTypeProfile, policy):
+    def getChoice(self, customerTypeProfile, customerGroup, policy):
         considerationSet = []
         choiceProbabilities = np.array([])
         
         # Form the consideration set and calculated the associated probabilities
         for i in self.state.keys():
             for j in self.state[i].keys():
+                # If a listing is available then..
                 if self.state[i][j] == 1:
                     considerationSet.append((i,j))
                     if policy[i][j] == 1:
-                        alpha = self.alpha[i][j] * self.interventionEffectAlpha[i][j]
+                        alpha = self.alpha[i][customerGroup] * self.interventionEffectAlpha[i][customerGroup]
                     utility = self.calculateUtility(customerTypeProfile, self.stateListings[i][j], 
-                                                    policy[i][j], self.interventionEffectUtility[i][j])
+                                                    policy[i][j], self.interventionEffectUtility[i][customerGroup])
                     choiceProbabilities = np.append(choiceProbabilities, alpha*utility)
         
         choiceProbabilities =  np.append(choiceProbabilities, self.epsilon)
@@ -236,7 +247,7 @@ lam3 = 5
 dim_c = 3    
 
 
-
+# Example cutomer and listing objects: 
 # Create 4 different group types of listings and their associated release from bookimg
 # costants and also the number of them available for booking initially. We also initiliaze
 # the mean of the profits obtained from each booking
@@ -274,4 +285,17 @@ listing1 = ListingGenerator(l1, dim_l, tau1, n1, p1)
 listing2 = ListingGenerator(l2, dim_l, tau2, n2, p2)
 listing3 = ListingGenerator(l3, dim_l, tau3, n3, p3)
 listing4 = ListingGenerator(l4, dim_l, tau4, n4, p4)
+
+
+customerList = [customer1, customer2, customer3]
+listingDic = {}
+listingDic[0] = listing1.getTypeProfiles()
+listingDic[1] = listing2.getTypeProfiles()
+listingDic[2] = listing3.getTypeProfiles()
+listingDic[3] = listing4.getTypeProfiles()
+
+dim = 3
+
+
+
         
